@@ -1,0 +1,36 @@
+version: 0.2
+
+env:
+  variables:
+    lambda_role_arn: "arn:aws:iam::544308776655:role/AWSLambda_BASH_ROLE"
+
+phases:
+  build:
+    commands:
+      - echo "Started Building!  Zipping Lambda functions"
+      - yum install -y zip
+      
+      # Zip & Deploy Lambda function code for lambda_function_one
+      - zip -r -j lambda_function_one.zip lambda_one_codes/*.py
+      - echo "Deploying to Lambda lambda_function_one"
+      - |
+        if aws lambda get-function --function-name lambda_function_one --region us-east-1 2>/dev/null; then
+          aws lambda update-function-code --function-name lambda_function_one --zip-file fileb://lambda_function_one.zip --region us-east-1
+        else
+          aws lambda create-function --function-name lambda_function_one --runtime python3.11 --handler lambda_function_one.lambda_handler --role $lambda_role_arn --zip-file fileb://lambda_function_one.zip --region us-east-1
+        fi
+      
+      # Zip & Deploy Lambda function code for lambda_function_two
+      - zip -r -j lambda_function_two.zip lambda_two_codes/*.py
+      - echo "Deploying to Lambda lambda_function_two"
+      - |
+        if aws lambda get-function --function-name lambda_function_two --region us-east-1 2>/dev/null; then
+          aws lambda update-function-code --function-name lambda_function_two --zip-file fileb://lambda_function_two.zip --region us-east-1
+        else
+          aws lambda create-function --function-name lambda_function_two --runtime python3.11 --handler lambda_function_two.lambda_handler --role $lambda_role_arn --zip-file fileb://lambda_function_two.zip --region us-east-1
+        fi
+
+artifacts:
+  files:
+    - lambda_function_one.zip
+    - lambda_function_two.zip
